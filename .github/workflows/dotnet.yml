@@ -1,0 +1,37 @@
+name: .NET
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v2
+      with:
+        dotnet-version: 6.0.x
+        
+    - name: Test
+      run: dotnet test ./src/GraphQL.sln --logger trx
+    
+    - name: Collect Workflow Telemetry
+      if: always()
+      uses: runforesight/foresight-workflow-kit-action@v1
+      with:
+        api_key: ${{ secrets.FORESIGHT_API_KEY }}
+        
+    - name: Analyze Test and/or Coverage Results
+      if: always()
+      uses: thundra-io/foresight-test-kit-action@v1
+      with:
+        api_key: ${{ secrets.FORESIGHT_API_KEY }}
+        test_framework: xunit2
+        test_format: trx
+        test_path: "./src/**/TestResults/**"
